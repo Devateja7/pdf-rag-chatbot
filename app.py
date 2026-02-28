@@ -11,10 +11,7 @@ import os
 import json
 from pathlib import Path
 
-try:
-    import fitz  # PyMuPDF < 1.24
-except ImportError:
-    import pymupdf as fitz  # PyMuPDF >= 1.24
+import pdfplumber
 import streamlit as st
 import anthropic
 import chromadb
@@ -74,12 +71,13 @@ def get_api_key() -> str:
 # Ingestion helpers
 # ─────────────────────────────────────────────
 def extract_pages(pdf_bytes: bytes, filename: str) -> list[dict]:
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    import io
     pages = []
-    for i, page in enumerate(doc):
-        text = page.get_text().strip()
-        if text:
-            pages.append({"text": text, "page": i + 1, "source": filename})
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for i, page in enumerate(pdf.pages):
+            text = (page.extract_text() or "").strip()
+            if text:
+                pages.append({"text": text, "page": i + 1, "source": filename})
     return pages
 
 
@@ -374,3 +372,4 @@ if prompt := st.chat_input("Ask a question about your PDFs…"):
 
 
     st.session_state["messages"].append({"role": "assistant", "content": full_response})
+
