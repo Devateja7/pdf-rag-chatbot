@@ -11,7 +11,10 @@ import os
 import json
 from pathlib import Path
 
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF < 1.24
+except ImportError:
+    import pymupdf as fitz  # PyMuPDF >= 1.24
 import streamlit as st
 import anthropic
 import chromadb
@@ -368,5 +371,6 @@ if prompt := st.chat_input("Ask a question about your PDFs…"):
                         st.markdown(f'<span class="tool-badge">📎 Query: {chunk["query"]}</span>', unsafe_allow_html=True)
 
         placeholder.markdown(full_response)
+
 
     st.session_state["messages"].append({"role": "assistant", "content": full_response})
